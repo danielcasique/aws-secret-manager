@@ -1,2 +1,58 @@
-# aws-secret-manager
-Implementing the aws-secretsmanager-jdbc from com.amazonaws.secretsmanager
+# How to implement AWS Secrets Manager JDBC
+Trying to implement the example from the following [video](https://www.youtube.com/watch?v=gIbr6-AR6T8).
+
+I'm struggling with the following error:
+```
+com.amazonaws.services.secretsmanager.model.AWSSecretsManagerException: The request signature we calculated does not match the signature you provided. Check your AWS Secret Access Key and signing method. Consult the service documentation for details. (Service: AWSSecretsManager; Status Code: 400; Error Code: InvalidSignatureException; Request ID: 2e6056af-bc9c-4032-a3a1-8edde71b3404)
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.handleErrorResponse(AmazonHttpClient.java:1660) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.executeOneRequest(AmazonHttpClient.java:1324) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.executeHelper(AmazonHttpClient.java:1074) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.doExecute(AmazonHttpClient.java:745) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.executeWithTimer(AmazonHttpClient.java:719) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.execute(AmazonHttpClient.java:701) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutor.access$500(AmazonHttpClient.java:669) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient$RequestExecutionBuilderImpl.execute(AmazonHttpClient.java:651) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.http.AmazonHttpClient.execute(AmazonHttpClient.java:515) ~[aws-java-sdk-core-1.11.418.jar:na]
+	at com.amazonaws.services.secretsmanager.AWSSecretsManagerClient.doInvoke(AWSSecretsManagerClient.java:2625) ~[aws-java-sdk-secretsmanager-1.11.418.jar:na]
+	at com.amazonaws.services.secretsmanager.AWSSecretsManagerClient.invoke(AWSSecretsManagerClient.java:2594) ~[aws-java-sdk-secretsmanager-1.11.418.jar:na]
+	at com.amazonaws.services.secretsmanager.AWSSecretsManagerClient.invoke(AWSSecretsManagerClient.java:2583) ~[aws-java-sdk-secretsmanager-1.11.418.jar:na]
+	at com.amazonaws.services.secretsmanager.AWSSecretsManagerClient.executeDescribeSecret(AWSSecretsManagerClient.java:895) ~[aws-java-sdk-secretsmanager-1.11.418.jar:na]
+	at com.amazonaws.services.secretsmanager.AWSSecretsManagerClient.describeSecret(AWSSecretsManagerClient.java:866) ~[aws-java-sdk-secretsmanager-1.11.418.jar:na]
+	at com.amazonaws.secretsmanager.caching.cache.SecretCacheItem.executeRefresh(SecretCacheItem.java:102) ~[aws-secretsmanager-caching-java-1.0.1.jar:na]
+	at com.amazonaws.secretsmanager.caching.cache.SecretCacheItem.executeRefresh(SecretCacheItem.java:32) ~[aws-secretsmanager-caching-java-1.0.1.jar:na]
+	at com.amazonaws.secretsmanager.caching.cache.SecretCacheObject.refresh(SecretCacheObject.java:188) ~[aws-secretsmanager-caching-java-1.0.1.jar:na]
+	at com.amazonaws.secretsmanager.caching.cache.SecretCacheObject.getSecretValue(SecretCacheObject.java:286) ~[aws-secretsmanager-caching-java-1.0.1.jar:na]
+	at com.amazonaws.secretsmanager.caching.SecretCache.getSecretString(SecretCache.java:123) ~[aws-secretsmanager-caching-java-1.0.1.jar:na]
+	at com.amazonaws.secretsmanager.sql.AWSSecretsManagerDriver.connectWithSecret(AWSSecretsManagerDriver.java:321) ~[aws-secretsmanager-jdbc-1.0.5.jar:na]
+	at com.amazonaws.secretsmanager.sql.AWSSecretsManagerDriver.connect(AWSSecretsManagerDriver.java:384) ~[aws-secretsmanager-jdbc-1.0.5.jar:na]
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:138) ~[HikariCP-3.4.3.jar:na]
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:358) ~[HikariCP-3.4.3.jar:na]
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:206) ~[HikariCP-3.4.3.jar:na]
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:477) ~[HikariCP-3.4.3.jar:na]
+	at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:560) ~[HikariCP-3.4.3.jar:na]
+	at com.zaxxer.hikari.pool.HikariPool.<init>(HikariPool.java:115) ~[HikariCP-3.4.3.jar:na]
+	at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:112) ~[HikariCP-3.4.3.jar:na]
+	at org.springframework.jdbc.datasource.DataSourceUtils.fetchConnection(DataSourceUtils.java:158) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:116) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:79) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.core.JdbcTemplate.execute(JdbcTemplate.java:371) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:452) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.core.JdbcTemplate.query(JdbcTemplate.java:462) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.core.JdbcTemplate.queryForObject(JdbcTemplate.java:473) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.jdbc.core.JdbcTemplate.queryForObject(JdbcTemplate.java:480) ~[spring-jdbc-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at com.casique.awssecretemanager.AwsSecreteManagerApplication.foo(AwsSecreteManagerApplication.java:23) ~[classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:566) ~[na:na]
+	at org.springframework.scheduling.support.ScheduledMethodRunnable.run(ScheduledMethodRunnable.java:84) ~[spring-context-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at org.springframework.scheduling.support.DelegatingErrorHandlingRunnable.run(DelegatingErrorHandlingRunnable.java:54) ~[spring-context-5.2.6.RELEASE.jar:5.2.6.RELEASE]
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:515) ~[na:na]
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) ~[na:na]
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:834) ~[na:na]
+
+2021-12-14 12:16:39.699 ERROR 21256 --- [   scheduling-1] o.s.s.s.TaskUtils$LoggingErrorHandler    : Unexpected error occurred in scheduled task
+```
